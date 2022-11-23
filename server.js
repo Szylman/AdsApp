@@ -22,7 +22,7 @@ if (process.env.NODE_ENV !== 'production') {
         })
     );
 }
-app.use(helmet());
+
 app.use(session({
     secret: process.env.secret,
     store: MongoStore.create(mongoose.connection),
@@ -43,17 +43,6 @@ db.once('open', () => {
 });
 db.on('error', err => console.log('Error ' + err));
 
-const io = socket(server);
-
-io.on('connection', (socket) => {
-
-    console.log('New socket!')
-});
-
-app.use((req, res, next) => {
-    req.io = io;
-    next();
-});
 
 //import routes
 const adsRoutes = require('./routes/ads.routes');
