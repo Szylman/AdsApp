@@ -1,9 +1,10 @@
 const User = require('../models/user.model');
 const bcrypt = require('bcryptjs');
+const getImageFileType = require('../utils/getImageFileType');
 
 exports.register = async (req, res) => {
     try{
-        const {login, password} = req.body;
+        const {login, password, phone} = req.body;
 
         const filetype = req.file ? await getImageFileType(req.file) : 'unknown';
 
@@ -11,21 +12,25 @@ exports.register = async (req, res) => {
             typeof login === 'string' && 
             password && 
             typeof password === 'string' &&
+            phone && 
+            typeof phone === 'string' &&
             req.file && 
             ['image/png', 'image/jpeg', 'image/gif'].includes(filetype)
-            ) {
+            ) 
+            { 
             const userWithLogin = await User.findOne({login});
             if (userWithLogin) {
                 return res
                 .status(409)
                 .send({ message: 'User with login already exists' });
             }
-
+            console.log('user', userWithLogin);
             const user = await User.create({
                 login, 
                 password: await bcrypt.hash(password, 10),
-            avatar: req.file.filename,});
-            res
+                phone,
+                avatar: req.file.filename,});
+            return res
             .status(201)
             .send({message: 'User created successfully' + user.login});
         }
@@ -52,7 +57,7 @@ exports.login = async (req, res) => {
             const user = await User.findOne({ login });
             if (!user) {
                 res
-                .status(404)
+                .status(401)
                 .send({message:'Login or password are incorrect'});
             }
             else {
@@ -64,7 +69,7 @@ exports.login = async (req, res) => {
                 }
                 else {
                     res
-                    .status(404)
+                    .status(401)
                     .send({message:'Login or password are incorrect'});
                 }
             }

@@ -8,7 +8,7 @@ const authMiddleware = require('../utils/authMiddleware');
 
 router.get('/ads', Ads.getAll);
 
-router.get('/ads/:id', Ads.getById);
+router.get('/ads/:id', Ads.getOne);
 
 router.post('/ads', authMiddleware, imageUpload.single('image'), Ads.newAd);
 

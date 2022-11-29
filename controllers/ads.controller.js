@@ -4,55 +4,53 @@ const fs = require('fs');
 
 exports.getAll = async (req, res) => {
     try {
-        res.json(await Ad.find());
+        res.json(await Ad.find().populate('user'));
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-exports.getById = async (req, res) => {
+exports.getOne = async (req, res) => {
     try {
-        const ad = await Ad.findById(req.params.id);
-        if (!ad) res.status(404).json({ message: 'Not found' });
-        else res.json(ad);
+        const elm = await Ad.findById(req.params.id).populate('user');
+        if (!elm) res.status(404).json({
+            message: 'Not found'
+        });
+        else res.json(elm);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(500).json({
+            message: err
+        });
     }
 };
 
 exports.newAd = async (req, res) => {
+    console.log(req.file);
     try {
-        const { title, description, date, price, localization, user, phone } =
+        const { title, content, price, place } =
             req.body;
         const fileType = req.file ? await getImageFileType(req.file) : 'unknown';
-
+        const user = req.session.user.id;
         if (
             title &&
-            title.length >= 10 &&
-            title.length <= 50 &&
-            description &&
-            description.length >= 20 &&
-            description.length <= 1000 &&
-            date &&
+
+            content &&
+
             req.file &&
             ['image/png', 'image/jpeg', 'image/gif'].includes(fileType) &&
             price &&
-            localization &&
-            user &&
-            phone
+            user
         ) {
             const ad = Ad.create({
                 title,
-                description,
-                date,
+                content,
                 image: req.file.filename,
                 price,
-                localization,
-                user,
-                phone,
+                localization: place,
+                user
             });
 
-            res.status(201).send({ message: 'Add created ' });
+            return res.status(201).send({ message: 'Add created ' });
         } else {
             if (req.file) {
                 fs.unlinkSync(`./public/uploads//${req.file.filename}`);
@@ -77,16 +75,15 @@ exports.deleteById = async (req, res) => {
 };
 
 exports.editAd = async (req, res, next) => {
-    const { title, description, price, date, localization, user } = req.body;
+    const { title, content, price, place, user } = req.body;
     try {
         const ad = await Ad.findById(req.params.id);
         if (!ad) return res.status(404).json({ message: 'Ad not found' });
         else {
             ad.title = title;
-            ad.description = description;
+            ad.content = content;
             ad.price = price;
-            ad.date = date;
-            ad.localization = localization;
+            ad.place = place;
             ad.user = user;
             if (req.file) {
                 ad.image = req.file.image;
